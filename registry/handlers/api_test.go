@@ -29,6 +29,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	v2 "github.com/docker/distribution/registry/api/v2"
+	v2errs "github.com/docker/distribution/registry/api/v2/errors"
 	storagedriver "github.com/docker/distribution/registry/storage/driver"
 	"github.com/docker/distribution/registry/storage/driver/factory"
 	_ "github.com/docker/distribution/registry/storage/driver/testdriver"
@@ -485,7 +486,7 @@ func testBlobAPI(t *testing.T, env *testEnv, args blobArgs) *testEnv {
 	}
 
 	checkResponse(t, "bad layer push", resp, http.StatusBadRequest)
-	checkBodyHasErrorCodes(t, "bad layer push", resp, v2.ErrorCodeDigestInvalid)
+	checkBodyHasErrorCodes(t, "bad layer push", resp, v2errs.ErrorCodeDigestInvalid)
 
 	// -----------------------------------------
 	// Do layer push with an empty body and correct digest
@@ -893,7 +894,7 @@ func TestGetManifestWithStorageError(t *testing.T) {
 	defer env1.Shutdown()
 
 	repo, _ := reference.WithName(repositoryWithManifestNotFound)
-	testManifestWithStorageError(t, env1, repo, http.StatusNotFound, v2.ErrorCodeManifestUnknown)
+	testManifestWithStorageError(t, env1, repo, http.StatusNotFound, v2errs.ErrorCodeManifestUnknown)
 
 	repo, _ = reference.WithName(repositoryWithGenericStorageError)
 	testManifestWithStorageError(t, env1, repo, http.StatusInternalServerError, errcode.ErrorCodeUnknown)
@@ -980,7 +981,7 @@ func testManifestAPISchema1(t *testing.T, env *testEnv, imageName reference.Name
 	defer resp.Body.Close()
 
 	checkResponse(t, "getting non-existent manifest", resp, http.StatusNotFound)
-	checkBodyHasErrorCodes(t, "getting non-existent manifest", resp, v2.ErrorCodeManifestUnknown)
+	checkBodyHasErrorCodes(t, "getting non-existent manifest", resp, v2errs.ErrorCodeManifestUnknown)
 
 	tagsURL, err := env.builder.BuildTagsURL(imageName)
 	if err != nil {
@@ -995,7 +996,7 @@ func testManifestAPISchema1(t *testing.T, env *testEnv, imageName reference.Name
 
 	// Check that we get an unknown repository error when asking for tags
 	checkResponse(t, "getting unknown manifest tags", resp, http.StatusNotFound)
-	checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2.ErrorCodeNameUnknown)
+	checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2errs.ErrorCodeNameUnknown)
 
 	// --------------------------------
 	// Attempt to push unsigned manifest with missing layers
@@ -1026,10 +1027,10 @@ func testManifestAPISchema1(t *testing.T, env *testEnv, imageName reference.Name
 	resp = putManifest(t, "putting unsigned manifest", manifestURL, "", unsignedManifest)
 	defer resp.Body.Close()
 	checkResponse(t, "putting unsigned manifest", resp, http.StatusBadRequest)
-	_, p, counts := checkBodyHasErrorCodes(t, "putting unsigned manifest", resp, v2.ErrorCodeManifestInvalid)
+	_, p, counts := checkBodyHasErrorCodes(t, "putting unsigned manifest", resp, v2errs.ErrorCodeManifestInvalid)
 
 	expectedCounts := map[errcode.ErrorCode]int{
-		v2.ErrorCodeManifestInvalid: 1,
+		v2errs.ErrorCodeManifestInvalid: 1,
 	}
 
 	if !reflect.DeepEqual(counts, expectedCounts) {
@@ -1046,11 +1047,11 @@ func testManifestAPISchema1(t *testing.T, env *testEnv, imageName reference.Name
 	defer resp.Body.Close()
 	checkResponse(t, "putting signed manifest with errors", resp, http.StatusBadRequest)
 	_, p, counts = checkBodyHasErrorCodes(t, "putting signed manifest with errors", resp,
-		v2.ErrorCodeManifestBlobUnknown, v2.ErrorCodeDigestInvalid)
+		v2errs.ErrorCodeManifestBlobUnknown, v2errs.ErrorCodeDigestInvalid)
 
 	expectedCounts = map[errcode.ErrorCode]int{
-		v2.ErrorCodeManifestBlobUnknown: 2,
-		v2.ErrorCodeDigestInvalid:       2,
+		v2errs.ErrorCodeManifestBlobUnknown: 2,
+		v2errs.ErrorCodeDigestInvalid:       2,
 	}
 
 	if !reflect.DeepEqual(counts, expectedCounts) {
@@ -1301,7 +1302,7 @@ func testManifestAPISchema2(t *testing.T, env *testEnv, imageName reference.Name
 	defer resp.Body.Close()
 
 	checkResponse(t, "getting non-existent manifest", resp, http.StatusNotFound)
-	checkBodyHasErrorCodes(t, "getting non-existent manifest", resp, v2.ErrorCodeManifestUnknown)
+	checkBodyHasErrorCodes(t, "getting non-existent manifest", resp, v2errs.ErrorCodeManifestUnknown)
 
 	tagsURL, err := env.builder.BuildTagsURL(imageName)
 	if err != nil {
@@ -1316,7 +1317,7 @@ func testManifestAPISchema2(t *testing.T, env *testEnv, imageName reference.Name
 
 	// Check that we get an unknown repository error when asking for tags
 	checkResponse(t, "getting unknown manifest tags", resp, http.StatusNotFound)
-	checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2.ErrorCodeNameUnknown)
+	checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2errs.ErrorCodeNameUnknown)
 
 	// --------------------------------
 	// Attempt to push manifest with missing config and missing layers
@@ -1347,10 +1348,10 @@ func testManifestAPISchema2(t *testing.T, env *testEnv, imageName reference.Name
 	resp = putManifest(t, "putting missing config manifest", manifestURL, schema2.MediaTypeManifest, manifest)
 	defer resp.Body.Close()
 	checkResponse(t, "putting missing config manifest", resp, http.StatusBadRequest)
-	_, p, counts := checkBodyHasErrorCodes(t, "putting missing config manifest", resp, v2.ErrorCodeManifestBlobUnknown)
+	_, p, counts := checkBodyHasErrorCodes(t, "putting missing config manifest", resp, v2errs.ErrorCodeManifestBlobUnknown)
 
 	expectedCounts := map[errcode.ErrorCode]int{
-		v2.ErrorCodeManifestBlobUnknown: 3,
+		v2errs.ErrorCodeManifestBlobUnknown: 3,
 	}
 
 	if !reflect.DeepEqual(counts, expectedCounts) {
@@ -1389,10 +1390,10 @@ func testManifestAPISchema2(t *testing.T, env *testEnv, imageName reference.Name
 	resp = putManifest(t, "putting missing layer manifest", manifestURL, schema2.MediaTypeManifest, manifest)
 	defer resp.Body.Close()
 	checkResponse(t, "putting missing layer manifest", resp, http.StatusBadRequest)
-	_, p, counts = checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2.ErrorCodeManifestBlobUnknown)
+	_, p, counts = checkBodyHasErrorCodes(t, "getting unknown manifest tags", resp, v2errs.ErrorCodeManifestBlobUnknown)
 
 	expectedCounts = map[errcode.ErrorCode]int{
-		v2.ErrorCodeManifestBlobUnknown: 2,
+		v2errs.ErrorCodeManifestBlobUnknown: 2,
 	}
 
 	if !reflect.DeepEqual(counts, expectedCounts) {
@@ -1667,10 +1668,10 @@ func testManifestAPIManifestList(t *testing.T, env *testEnv, args manifestArgs) 
 	resp := putManifest(t, "putting missing manifest manifestlist", manifestURL, manifestlist.MediaTypeManifestList, manifestList)
 	defer resp.Body.Close()
 	checkResponse(t, "putting missing manifest manifestlist", resp, http.StatusBadRequest)
-	_, p, counts := checkBodyHasErrorCodes(t, "putting missing manifest manifestlist", resp, v2.ErrorCodeManifestBlobUnknown)
+	_, p, counts := checkBodyHasErrorCodes(t, "putting missing manifest manifestlist", resp, v2errs.ErrorCodeManifestBlobUnknown)
 
 	expectedCounts := map[errcode.ErrorCode]int{
-		v2.ErrorCodeManifestBlobUnknown: 1,
+		v2errs.ErrorCodeManifestBlobUnknown: 1,
 	}
 
 	if !reflect.DeepEqual(counts, expectedCounts) {

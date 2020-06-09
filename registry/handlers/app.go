@@ -25,6 +25,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	v2 "github.com/docker/distribution/registry/api/v2"
+	v2errs "github.com/docker/distribution/registry/api/v2/errors"
 	"github.com/docker/distribution/registry/auth"
 	registrymiddleware "github.com/docker/distribution/registry/middleware/registry"
 	repositorymiddleware "github.com/docker/distribution/registry/middleware/repository"
@@ -693,9 +694,9 @@ func (app *App) dispatcher(dispatch dispatchFunc) http.Handler {
 
 				switch err := err.(type) {
 				case distribution.ErrRepositoryUnknown:
-					context.Errors = append(context.Errors, v2.ErrorCodeNameUnknown.WithDetail(err))
+					context.Errors = append(context.Errors, v2errs.ErrorCodeNameUnknown.WithDetail(err))
 				case distribution.ErrRepositoryNameInvalid:
-					context.Errors = append(context.Errors, v2.ErrorCodeNameInvalid.WithDetail(err))
+					context.Errors = append(context.Errors, v2errs.ErrorCodeNameInvalid.WithDetail(err))
 				case errcode.Error:
 					context.Errors = append(context.Errors, err)
 				}

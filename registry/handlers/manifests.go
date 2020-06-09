@@ -15,7 +15,7 @@ import (
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	v2 "github.com/docker/distribution/registry/api/v2/errors"
 	"github.com/docker/distribution/registry/auth"
 	"github.com/gorilla/handlers"
 	"github.com/opencontainers/go-digest"

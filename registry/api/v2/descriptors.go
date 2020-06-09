@@ -6,6 +6,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
+	v2errs "github.com/docker/distribution/registry/api/v2/errors"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -151,7 +152,7 @@ var (
 			Format:      errorsBody,
 		},
 		ErrorCodes: []errcode.ErrorCode{
-			ErrorCodeNameUnknown,
+			v2errs.ErrorCodeNameUnknown,
 		},
 	}
 
@@ -537,8 +538,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The name or reference was invalid.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeTagInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeTagInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -596,11 +597,11 @@ var routeDescriptors = []RouteDescriptor{
 									Format:      errorsBody,
 								},
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeTagInvalid,
-									ErrorCodeManifestInvalid,
-									ErrorCodeManifestUnverified,
-									ErrorCodeBlobUnknown,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeTagInvalid,
+									v2errs.ErrorCodeManifestInvalid,
+									v2errs.ErrorCodeManifestUnverified,
+									v2errs.ErrorCodeBlobUnknown,
 								},
 							},
 							unauthorizedResponseDescriptor,
@@ -612,7 +613,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "One or more layers may be missing during a manifest upload. If so, the missing layers will be enumerated in the error response.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUnknown,
+									v2errs.ErrorCodeBlobUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -665,8 +666,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The specified `name` or `reference` were invalid and the delete was unable to proceed.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeTagInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeTagInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -682,8 +683,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The specified `name` or `reference` are unknown to the registry and the delete was unable to proceed. Clients can assume the manifest was already deleted if this response is returned.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameUnknown,
-									ErrorCodeManifestUnknown,
+									v2errs.ErrorCodeNameUnknown,
+									v2errs.ErrorCodeManifestUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -762,8 +763,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was a problem with the request that needs to be addressed by the client, such as an invalid `name` or `tag`.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -778,8 +779,8 @@ var routeDescriptors = []RouteDescriptor{
 									Format:      errorsBody,
 								},
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameUnknown,
-									ErrorCodeBlobUnknown,
+									v2errs.ErrorCodeNameUnknown,
+									v2errs.ErrorCodeBlobUnknown,
 								},
 							},
 							unauthorizedResponseDescriptor,
@@ -834,8 +835,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was a problem with the request that needs to be addressed by the client, such as an invalid `name` or `tag`.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -845,8 +846,8 @@ var routeDescriptors = []RouteDescriptor{
 							{
 								StatusCode: http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameUnknown,
-									ErrorCodeBlobUnknown,
+									v2errs.ErrorCodeNameUnknown,
+									v2errs.ErrorCodeBlobUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -897,8 +898,8 @@ var routeDescriptors = []RouteDescriptor{
 								Name:       "Invalid Name or Digest",
 								StatusCode: http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
 								},
 							},
 							{
@@ -909,8 +910,8 @@ var routeDescriptors = []RouteDescriptor{
 									Format:      errorsBody,
 								},
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameUnknown,
-									ErrorCodeBlobUnknown,
+									v2errs.ErrorCodeNameUnknown,
+									v2errs.ErrorCodeBlobUnknown,
 								},
 							},
 							{
@@ -997,8 +998,8 @@ var routeDescriptors = []RouteDescriptor{
 								Name:       "Invalid Name or Digest",
 								StatusCode: http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
 								},
 							},
 							{
@@ -1052,8 +1053,8 @@ var routeDescriptors = []RouteDescriptor{
 								Name:       "Invalid Name or Digest",
 								StatusCode: http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
 								},
 							},
 							unauthorizedResponseDescriptor,
@@ -1109,8 +1110,8 @@ var routeDescriptors = []RouteDescriptor{
 								Name:       "Invalid Name or Digest",
 								StatusCode: http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
 								},
 							},
 							{
@@ -1174,9 +1175,9 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was an error processing the upload and it must be restarted.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
-									ErrorCodeBlobUploadInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeBlobUploadInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1187,7 +1188,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The upload is unknown to the registry. The upload must be restarted.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUploadUnknown,
+									v2errs.ErrorCodeBlobUploadUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1249,9 +1250,9 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was an error processing the upload and it must be restarted.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
-									ErrorCodeBlobUploadInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeBlobUploadInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1262,7 +1263,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The upload is unknown to the registry. The upload must be restarted.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUploadUnknown,
+									v2errs.ErrorCodeBlobUploadUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1331,9 +1332,9 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was an error processing the upload and it must be restarted.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
-									ErrorCodeBlobUploadInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeBlobUploadInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1344,7 +1345,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The upload is unknown to the registry. The upload must be restarted.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUploadUnknown,
+									v2errs.ErrorCodeBlobUploadUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1425,9 +1426,9 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "There was an error processing the upload and it must be restarted.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeDigestInvalid,
-									ErrorCodeNameInvalid,
-									ErrorCodeBlobUploadInvalid,
+									v2errs.ErrorCodeDigestInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeBlobUploadInvalid,
 									errcode.ErrorCodeUnsupported,
 								},
 								Body: BodyDescriptor{
@@ -1439,7 +1440,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The upload is unknown to the registry. The upload must be restarted.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUploadUnknown,
+									v2errs.ErrorCodeBlobUploadUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1484,8 +1485,8 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "An error was encountered processing the delete. The client may ignore this error.",
 								StatusCode:  http.StatusBadRequest,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeNameInvalid,
-									ErrorCodeBlobUploadInvalid,
+									v2errs.ErrorCodeNameInvalid,
+									v2errs.ErrorCodeBlobUploadInvalid,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
@@ -1496,7 +1497,7 @@ var routeDescriptors = []RouteDescriptor{
 								Description: "The upload is unknown to the registry. The client may ignore this error and assume the upload has been deleted.",
 								StatusCode:  http.StatusNotFound,
 								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeBlobUploadUnknown,
+									v2errs.ErrorCodeBlobUploadUnknown,
 								},
 								Body: BodyDescriptor{
 									ContentType: "application/json",
