@@ -1,3 +1,8 @@
+.POSIX:
+
+# Force vendor mode
+export GOFLAGS=-mod=vendor
+
 # Root directory of the project (absolute path).
 ROOTDIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -9,7 +14,7 @@ REVISION ?= $(shell git rev-parse HEAD)$(shell if ! git diff --no-ext-diff --qui
 PKG=github.com/docker/distribution
 
 # Project packages.
-PACKAGES=$(shell go list -tags "${BUILDTAGS}" ./... | grep -v /vendor/)
+PACKAGES=$(shell go list ${GOFLAGS} -tags "${BUILDTAGS}" ./... | grep -v /vendor/)
 INTEGRATION_PACKAGE=${PKG}
 COVERAGE_PACKAGES=$(filter-out ${PKG}/registry/storage/driver/%,${PACKAGES})
 

@@ -38,6 +38,7 @@ install:
 script:
   - export GOOS=$TRAVIS_GOOS
   - export CGO_ENABLED=$TRAVIS_CGO_ENABLED
+  - export GOFLAGS=-mod=vendor
   - DCO_VERBOSITY=-q script/validate/dco
   - GOOS=linux GO111MODULE=on script/setup/install-dev-tools
   - script/validate/vendor
