@@ -786,7 +786,7 @@ func (d *driver) Stat(ctx context.Context, path string) (storagedriver.FileInfo,
 
 	// For AWS errors, we fail over to ListObjects:
 	// Though the official docs (https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html#API_HeadObject_Errors)
-	// are silly outdated, the HeadObject actually returns NotFound error
+	// are slightly outdated, the HeadObject actually returns NotFound error
 	// if querying a key which doesn't exist or a key which has nested keys
 	// and Forbidden if IAM/ACL permissions do not allow Head but allow List.
 	if _, ok := err.(awserr.Error); ok {
