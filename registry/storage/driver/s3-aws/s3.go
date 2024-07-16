@@ -763,62 +763,75 @@ func (d *driver) Writer(ctx context.Context, path string, appendMode bool) (stor
 	return nil, storagedriver.PathNotFoundError{Path: path}
 }
 
+func (d *driver) statHead(ctx context.Context, s3Path string) (*storagedriver.FileInfoFields, error) {
+	resp, err := d.S3.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(d.Bucket),
+		Key:    aws.String(s3Path),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &storagedriver.FileInfoFields{
+		IsDir:   false,
+		Size:    *resp.ContentLength,
+		ModTime: *resp.LastModified,
+	}, nil
+}
+
+func (d *driver) statList(ctx context.Context, s3Path string) (*storagedriver.FileInfoFields, error) {
+	resp, err := d.S3.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
+		Bucket:  aws.String(d.Bucket),
+		Prefix:  aws.String(s3Path),
+		MaxKeys: aws.Int64(1),
+	})
+	if err != nil {
+		return nil, err
+	}
+	var fi storagedriver.FileInfoFields
+	if len(resp.Contents) == 1 {
+		if *resp.Contents[0].Key != s3Path {
+			fi.IsDir = true
+			return &fi, nil
+		}
+		fi.IsDir = false
+		fi.Size = *resp.Contents[0].Size
+		fi.ModTime = *resp.Contents[0].LastModified
+		return &fi, nil
+	}
+	if len(resp.CommonPrefixes) == 1 {
+		fi.IsDir = true
+		return &fi, nil
+	}
+	return nil, storagedriver.PathNotFoundError{Path: s3Path}
+}
+
 // Stat retrieves the FileInfo for the given path, including the current size
 // in bytes and the creation time.
 func (d *driver) Stat(ctx context.Context, path string) (storagedriver.FileInfo, error) {
 	s3Path := d.s3Path(path)
-
-	fi := storagedriver.FileInfoFields{
-		Path: path,
-	}
-
-	// Try HeadObject first
-	headResp, err := d.S3.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(d.Bucket),
-		Key:    aws.String(s3Path),
-	})
-	if err == nil {
-		fi.IsDir = false
-		fi.Size = *headResp.ContentLength
-		fi.ModTime = *headResp.LastModified
-		return storagedriver.FileInfoInternal{FileInfoFields: fi}, nil
-	}
-
-	// For AWS errors, we fail over to ListObjects:
-	// Though the official docs (https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html#API_HeadObject_Errors)
-	// are slightly outdated, the HeadObject actually returns NotFound error
-	// if querying a key which doesn't exist or a key which has nested keys
-	// and Forbidden if IAM/ACL permissions do not allow Head but allow List.
-	if _, ok := err.(awserr.Error); ok {
-		resp, err := d.S3.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
-			Bucket:  aws.String(d.Bucket),
-			Prefix:  aws.String(s3Path),
-			MaxKeys: aws.Int64(1),
-		})
-		if err != nil {
-			return nil, parseError(path, err)
-		}
-
-		if len(resp.Contents) == 1 {
-			if *resp.Contents[0].Key != d.s3Path(path) {
-				fi.IsDir = true
-				return storagedriver.FileInfoInternal{FileInfoFields: fi}, nil
+	fi, err := d.statHead(ctx, s3Path)
+	if err != nil {
+		// For AWS errors, we fail over to ListObjects:
+		// Though the official docs https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html#API_HeadObject_Errors
+		// are slightly outdated, the HeadObject actually returns NotFound error
+		// if querying a key which doesn't exist or a key which has nested keys
+		// and Forbidden if IAM/ACL permissions do not allow Head but allow List.
+		if _, ok := err.(awserr.Error); ok {
+			fi, err := d.statList(ctx, s3Path)
+			if err != nil {
+				if errors.Is(err, storagedriver.PathNotFoundError{}) {
+					return nil, storagedriver.PathNotFoundError{Path: path}
+				}
+				return nil, parseError(path, err)
 			}
-			fi.IsDir = false
-			fi.Size = *resp.Contents[0].Size
-			fi.ModTime = *resp.Contents[0].LastModified
-			return storagedriver.FileInfoInternal{FileInfoFields: fi}, nil
+			fi.Path = path
+			return storagedriver.FileInfoInternal{FileInfoFields: *fi}, nil
 		}
-		if len(resp.CommonPrefixes) == 1 {
-			fi.IsDir = true
-			return storagedriver.FileInfoInternal{FileInfoFields: fi}, nil
-		}
-
-		return nil, storagedriver.PathNotFoundError{Path: path}
+		// For non-AWS errors, return the error directly
+		return nil, err
 	}
-
-	// For non-AWS errors, return the error directly
-	return nil, err
+	fi.Path = path
+	return storagedriver.FileInfoInternal{FileInfoFields: *fi}, nil
 }
 
 // List returns a list of the objects that are direct descendants of the given path.
