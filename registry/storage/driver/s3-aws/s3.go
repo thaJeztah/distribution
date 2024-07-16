@@ -763,22 +763,24 @@ func (d *driver) Writer(ctx context.Context, path string, appendMode bool) (stor
 	return nil, storagedriver.PathNotFoundError{Path: path}
 }
 
-func (d *driver) statHead(ctx context.Context, s3Path string) (*storagedriver.FileInfoFields, error) {
+func (d *driver) statHead(ctx context.Context, path string) (*storagedriver.FileInfoFields, error) {
 	resp, err := d.S3.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(d.Bucket),
-		Key:    aws.String(s3Path),
+		Key:    aws.String(d.s3Path(path)),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &storagedriver.FileInfoFields{
+		Path:    path,
 		IsDir:   false,
 		Size:    *resp.ContentLength,
 		ModTime: *resp.LastModified,
 	}, nil
 }
 
-func (d *driver) statList(ctx context.Context, s3Path string) (*storagedriver.FileInfoFields, error) {
+func (d *driver) statList(ctx context.Context, path string) (*storagedriver.FileInfoFields, error) {
+	s3Path := d.s3Path(path)
 	resp, err := d.S3.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
 		Bucket:  aws.String(d.Bucket),
 		Prefix:  aws.String(s3Path),
@@ -787,20 +789,24 @@ func (d *driver) statList(ctx context.Context, s3Path string) (*storagedriver.Fi
 	if err != nil {
 		return nil, err
 	}
-	var fi storagedriver.FileInfoFields
 	if len(resp.Contents) == 1 {
 		if *resp.Contents[0].Key != s3Path {
-			fi.IsDir = true
-			return &fi, nil
+			return &storagedriver.FileInfoFields{
+				Path:  path,
+				IsDir: true,
+			}, nil
 		}
-		fi.IsDir = false
-		fi.Size = *resp.Contents[0].Size
-		fi.ModTime = *resp.Contents[0].LastModified
-		return &fi, nil
+		return &storagedriver.FileInfoFields{
+			Path:    path,
+			Size:    *resp.Contents[0].Size,
+			ModTime: *resp.Contents[0].LastModified,
+		}, nil
 	}
 	if len(resp.CommonPrefixes) == 1 {
-		fi.IsDir = true
-		return &fi, nil
+		return &storagedriver.FileInfoFields{
+			Path:  path,
+			IsDir: true,
+		}, nil
 	}
 	return nil, storagedriver.PathNotFoundError{Path: s3Path}
 }
@@ -808,29 +814,27 @@ func (d *driver) statList(ctx context.Context, s3Path string) (*storagedriver.Fi
 // Stat retrieves the FileInfo for the given path, including the current size
 // in bytes and the creation time.
 func (d *driver) Stat(ctx context.Context, path string) (storagedriver.FileInfo, error) {
-	s3Path := d.s3Path(path)
-	fi, err := d.statHead(ctx, s3Path)
+	fi, err := d.statHead(ctx, path)
 	if err != nil {
 		// For AWS errors, we fail over to ListObjects:
 		// Though the official docs https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html#API_HeadObject_Errors
 		// are slightly outdated, the HeadObject actually returns NotFound error
 		// if querying a key which doesn't exist or a key which has nested keys
 		// and Forbidden if IAM/ACL permissions do not allow Head but allow List.
-		if _, ok := err.(awserr.Error); ok {
-			fi, err := d.statList(ctx, s3Path)
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
+			fi, err := d.statList(ctx, path)
 			if err != nil {
 				if errors.Is(err, storagedriver.PathNotFoundError{}) {
 					return nil, storagedriver.PathNotFoundError{Path: path}
 				}
 				return nil, parseError(path, err)
 			}
-			fi.Path = path
 			return storagedriver.FileInfoInternal{FileInfoFields: *fi}, nil
 		}
 		// For non-AWS errors, return the error directly
 		return nil, err
 	}
-	fi.Path = path
 	return storagedriver.FileInfoInternal{FileInfoFields: *fi}, nil
 }
 
