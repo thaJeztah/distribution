@@ -808,7 +808,7 @@ func (d *driver) statList(ctx context.Context, path string) (*storagedriver.File
 			IsDir: true,
 		}, nil
 	}
-	return nil, storagedriver.PathNotFoundError{Path: s3Path}
+	return nil, storagedriver.PathNotFoundError{Path: path}
 }
 
 // Stat retrieves the FileInfo for the given path, including the current size
@@ -825,8 +825,9 @@ func (d *driver) Stat(ctx context.Context, path string) (storagedriver.FileInfo,
 		if errors.As(err, &awsErr) {
 			fi, err := d.statList(ctx, path)
 			if err != nil {
-				if errors.Is(err, storagedriver.PathNotFoundError{}) {
-					return nil, storagedriver.PathNotFoundError{Path: path}
+				var nfe storagedriver.PathNotFoundError
+				if errors.As(err, &nfe) {
+					return nil, err
 				}
 				return nil, parseError(path, err)
 			}
